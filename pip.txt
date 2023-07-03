@@ -1,0 +1,26 @@
+pip install virtualenv
+
+virtualenv env
+source env/bin/activate (unix)
+env\Scripts\activate (windows)
+
+deactivate
+
+#pip install 
+
+pip install Django
+pip install djangorestframework
+pip install python-dotenv
+pip install django-cors-headers
+pip install requests
+
+
+#install from 
+
+pip install -r requirements.txt
+
+
+#comands
+pip freeze > requirements.txt
+python manage.py makemigrations
+python manage.py migrate
