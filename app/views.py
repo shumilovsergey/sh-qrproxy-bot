@@ -5,45 +5,50 @@ from rest_framework.response import Response
 from django.shortcuts import render
 from django.http import HttpResponse
 from .tg_def import message_get
-from .tg_def import text_send
-from .tg_def import file_send
+from .tg_def import inline
+from .serializers import ChatSerializer
 import json
 
 class WebhookView(APIView):
     def post(self, request):
         message = message_get(request)
-        if message["data"]["callback"] != "none":
-            pass
-        elif message["content"]["photo_id"] != "none":
-            photo_get(message)
-        elif message["content"]["audio"] != "none":
-            pass
-        elif message["content"]["document"] != "none":
-            pass
-        elif message["content"]["text"] != "none":
-            text_get(message)
+        print(message)
+
+        if message["content"]["text"] == "/start":
             chat_id = message["data"]["chat_id"]
-            file_id = "AgACAgIAAxkBAAN7ZJ1qKAuGPXcpKpf2ZKcQx6KH7bcAAkPPMRtrNPBISezWDHZzYRQBAAMCAANzAAMvBA"
-            file_send(file_id, chat_id)
+            chat = {'chat_id' : chat_id }
+            serializer = ChatSerializer(data=chat)
+            if serializer.is_valid():
+                serializer.save()
+                keyboard = {
+                    "inline_keyboard" : [
+                        [
+                            {'text': 'Создать', 'callback_data': 'rout_create'}
+                        ],
+                        [
+                            {'text': 'Обратная связь', 'callback_data': 'contact'}
+                        ]
+                    ]
+                }
+            else:
+                keyboard = {
+                    "inline_keyboard" :  [
+                        [
+                            {'text': 'Редактировать', 'callback_data': 'rout_put'}
+                        ],        
+                        [
+                            {'text': 'Показать', 'callback_data': 'rout_get'}
+                        ], 
+                        [
+                            {'text': 'Обратная связь', 'callback_data': 'contact'}
+                        ]                
+                    ]
+                } 
+            text = "Меню:"
+            
+            inline(chat_id=chat_id, text=text, keyboard=keyboard)
+
+        else:
+            pass
         return HttpResponse()
 
-def text_get(request):
-    print(request)
-    text_send(request)
-    return 
-
-def callback_get(request):
-    print(request)
-    return 
-
-def photo_get(request):
-    print(request)
-    return 
-
-def audio_get(request):
-    print(request)
-    return 
-
-def document_get(request):
-    print(request)
-    return 
