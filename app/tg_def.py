@@ -1,15 +1,18 @@
 import json
 import requests
 from project.const import BOT_TOKEN
+from .models import Chats
 
 def message_get(request):
     data = json.loads(request.body.decode('utf-8'))
 
     if 'callback_query' in data:
         callback = data['callback_query']['data']
-        message_id = "none"
-        chat_id = "none"
-
+        message_id = data['callback_query']["message"]["message_id"]
+        chat_id = data['callback_query']['from']["id"]
+        user = Chats.objects.get(chat_id=chat_id)
+        user.last_callback = callback
+        user.save()      
     else:
         chat_id = data["message"]["chat"]["id"]
         message_id = data["message"]["message_id"]
@@ -65,27 +68,47 @@ def message_get(request):
     }
     return message
 
-def text_send(message):
-    chat_id = message["data"]["chat_id"]
-    text = message["content"]["text"]
+def message_send(request):
+    if request["keyboard"] == "none":
+        data = { 
+            "chat_id": request["chat_id"],
+            "text": request["text"]
+        }
+    else:
+        data = { 
+            "chat_id": request["chat_id"],
+            "text": request["text"],
+            "reply_markup" : json.dumps(request["keyboard"])
+        }
 
-    data = { 
-        "chat_id": chat_id,
-        "text": text,
-    }
     response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data)
-    print(response.json())
     return response
 
+def message_edit(request):
+    if request["keyboard"] == "none":
+        data = { 
+            "chat_id": request["chat_id"],
+            "text": request["text"],
+            "message_id" : request["message_id"]
+        }
+    else:
+        data = { 
+            "chat_id": request["chat_id"],
+            "text": request["text"],
+            "message_id" : request["message_id"],
+            "reply_markup" : json.dumps(request["keyboard"])
+        }
 
+    response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", data)
+    return response
 
-
-
-
-
-
-
-
+def message_delete(chat_id, message_id):
+    data = {
+        "chat_id": chat_id,
+        "message_id" : message_id
+    }
+    response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage", data)
+    return response
 
 
 
@@ -116,15 +139,3 @@ def text_send(message):
 
 
 #     return response
-def inline(chat_id, text, keyboard):
-
-    data = { 
-        "chat_id": chat_id,
-        "text": text,
-        "reply_markup" : json.dumps(keyboard)
-    }
-    response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data)
-    print(response.json())
-    return response
-
-
