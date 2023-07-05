@@ -21,19 +21,14 @@ class WebhookView(APIView):
         message_id = message["data"]["message_id"]
         text = message["content"]["text"]
         callback = message["data"]["callback"]
+        keyboard = "none"
 
         if text == "/start":
             start(message)
 
         elif callback == "rout_create":
             text = "Отправьте мне ссылку на ваш сайт"
-            response = {
-                "chat_id" : chat_id,
-                "text" : text,
-                "keyboard" : "none",
-                "message_id" : message_id
-            }
-            message_edit(response)
+            message_edit(chat_id, message_id, text, keyboard)
 
 ###___CALLBACK___###
         else:
@@ -88,17 +83,14 @@ def start(message):
         }
 
     text = "Меню:"
-    message = {
-        "chat_id" : chat_id,
-        "text" : text,
-        "keyboard" : keyboard
-    }
-    message_send(message)
+
+    message_send(chat_id, text, keyboard)
     return 
 
 def rout_create(message, user):
     chat_id = message["data"]["chat_id"]
     message_id = message["data"]["message_id"]
+    keyboard = "none"
 
     url = message["content"]["text"]
     try:
@@ -112,8 +104,16 @@ def rout_create(message, user):
 
     if response != 200:
         message_delete(chat_id, message_id)
-        
-        
+
+        text = "Плохая ссылка, попробуйте еще раз!"
+        message_id = user.last_id
+        message_edit(chat_id, message_id, text, keyboard)
+    else:
+        message_delete(chat_id, message_id)
+        message_id = user.last_id
+        message_delete(chat_id, message_id)
+        text = "Готово!"
+        message_send(chat_id, text, keyboard)
 
 
 

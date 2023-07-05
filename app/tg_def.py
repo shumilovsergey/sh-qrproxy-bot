@@ -2,6 +2,8 @@ import json
 import requests
 from project.const import BOT_TOKEN
 from .models import Chats
+import qrcode
+from PIL import Image
 
 def message_get(request):
     data = json.loads(request.body.decode('utf-8'))
@@ -12,6 +14,7 @@ def message_get(request):
         chat_id = data['callback_query']['from']["id"]
         user = Chats.objects.get(chat_id=chat_id)
         user.last_callback = callback
+        user.last_id = message_id
         user.save()      
     else:
         chat_id = data["message"]["chat"]["id"]
@@ -68,35 +71,35 @@ def message_get(request):
     }
     return message
 
-def message_send(request):
-    if request["keyboard"] == "none":
+def message_send(chat_id, text, keyboard):
+    if keyboard == "none":
         data = { 
-            "chat_id": request["chat_id"],
-            "text": request["text"]
+            "chat_id": chat_id,
+            "text": text
         }
     else:
         data = { 
-            "chat_id": request["chat_id"],
-            "text": request["text"],
-            "reply_markup" : json.dumps(request["keyboard"])
+            "chat_id": chat_id,
+            "text": text,
+            "reply_markup" : json.dumps(keyboard)
         }
 
     response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data)
     return response
 
-def message_edit(request):
-    if request["keyboard"] == "none":
+def message_edit(chat_id, message_id, text, keyboard):
+    if keyboard == "none":
         data = { 
-            "chat_id": request["chat_id"],
-            "text": request["text"],
-            "message_id" : request["message_id"]
+            "chat_id": chat_id,
+            "text": text,
+            "message_id" : message_id
         }
     else:
         data = { 
-            "chat_id": request["chat_id"],
-            "text": request["text"],
-            "message_id" : request["message_id"],
-            "reply_markup" : json.dumps(request["keyboard"])
+            "chat_id": chat_id,
+            "text": text,
+            "message_id" : message_id,
+            "reply_markup" : json.dumps(keyboard)
         }
 
     response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageText", data)
@@ -110,7 +113,15 @@ def message_delete(chat_id, message_id):
     response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage", data)
     return response
 
+def qr_create(chat_id):
+    url = "https://www.example.com"
+    qr = qrcode.make(url)
+    file_path = f"{chat_id}.png"
+    qr.save(file_path)
+    return
 
+def qr_send(chat_id, text, keyboard):
+    return
 
 
 

@@ -28,7 +28,15 @@ class Chats(models.Model):
         max_length=56,
         default="none"
     )
-    
+
+    last_id = models.CharField(
+        verbose_name="Последний callback ID",
+        max_length=56,
+        default="none"
+    )
+
+
+
     def __str__(self):
         return self.chat_id
     
