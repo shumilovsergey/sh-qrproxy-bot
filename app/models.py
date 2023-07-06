@@ -35,6 +35,11 @@ class Chats(models.Model):
         default="none"
     )
 
+    qr_id = models.CharField(
+        verbose_name="ID qr для телеграмма",
+        max_length=256,
+        default="none"
+    )
 
 
     def __str__(self):

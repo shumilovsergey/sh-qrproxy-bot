@@ -8,10 +8,23 @@ from .tg_def import message_get
 from .tg_def import message_send
 from .tg_def import message_edit
 from .tg_def import message_delete
+from .tg_def import qr_create
+from .tg_def import photo_send
 from .serializers import ChatSerializer
 from .models import Chats
 import json
 import requests
+from project.const import DOMAIN_NAME
+import os
+
+MENU_BUTTON = {
+        "inline_keyboard" :  [
+            [
+                {'text': 'Меню', 'callback_data': 'menu'}
+            ]
+        ]
+    }
+
 
 class WebhookView(APIView):
     def post(self, request):
@@ -29,7 +42,24 @@ class WebhookView(APIView):
         elif callback == "rout_create":
             text = "Отправьте мне ссылку на ваш сайт"
             message_edit(chat_id, message_id, text, keyboard)
+        
+        elif callback == "menu":
+            message_delete(chat_id, message_id)
+            start(message)
 
+        elif callback == "rout_get":
+            message_delete(chat_id, message_id)
+            user = Chats.objects.get(chat_id=chat_id)
+            photo_id = user.qr_id
+            text = "Вот ваш QrCode"
+            keyboard = MENU_BUTTON
+            photo_send(chat_id, text, keyboard, photo_id)
+        
+        elif callback == "contact":
+            message_delete(chat_id, message_id)
+            text = "Отзывы и предложения можно отправить по адресу wumilovsergey@gmail.com, либо в телеграме @sergey_showmelove!"
+            keyboard = MENU_BUTTON
+            message_send(chat_id, text, keyboard)
 ###___CALLBACK___###
         else:
             user = Chats.objects.get(chat_id=chat_id)
@@ -54,6 +84,7 @@ def start(message):
 
     user = Chats.objects.get(chat_id=chat_id)
     user.last_callback = "none"
+    user.public_url = f"{DOMAIN_NAME}/telegram_bot/api/{chat_id}"
     user.save()
 
     if user.privat_url == "none":
@@ -82,12 +113,13 @@ def start(message):
             ]
         }
 
-    text = "Меню:"
+    text = "Меню"
 
     message_send(chat_id, text, keyboard)
     return 
 
 def rout_create(message, user):
+    privat_url = message["content"]["text"]
     chat_id = message["data"]["chat_id"]
     message_id = message["data"]["message_id"]
     keyboard = "none"
@@ -112,22 +144,21 @@ def rout_create(message, user):
         message_delete(chat_id, message_id)
         message_id = user.last_id
         message_delete(chat_id, message_id)
-        text = "Готово!"
-        message_send(chat_id, text, keyboard)
+        photo_id = qr_create(chat_id, user)
 
+        user.privat_url = privat_url
+        user.last_callback = "none"
+        user.last_id = "none"
+        user.save()
 
+    return
 
+class RedirectView(APIView):
+    def get(self, request, chat_id):
 
-    # try:
-    #     response = url_check(url)
-    # except:
-    #     response = 400
-
-    # if response == 200:
-    #     user.last_callback = "none"
-    #     user.privat_url = url
-    #     user.save()
-
-
-
-    return response
+        user = Chats.objects.get(chat_id=chat_id)
+        if user.privat_url == "none":
+            response = "none"
+        else:
+            response=redirect(user.privat_url)
+        return response

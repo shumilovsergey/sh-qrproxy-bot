@@ -5,6 +5,7 @@ from .models import Chats
 import qrcode
 from PIL import Image
 
+
 def message_get(request):
     data = json.loads(request.body.decode('utf-8'))
 
@@ -113,40 +114,44 @@ def message_delete(chat_id, message_id):
     response = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage", data)
     return response
 
-def qr_create(chat_id):
-    url = "https://www.example.com"
+def qr_create(chat_id, user):
+    url = user.public_url
     qr = qrcode.make(url)
-    file_path = f"{chat_id}.png"
+    file_path = "qr.png"
     qr.save(file_path)
-    return
+    text = "Готово! Вот ваш QrCode"
+    keyboard = {
+        "inline_keyboard" :  [
+            [
+                {'text': 'Меню', 'callback_data': 'menu'}
+            ]
+        ]
+    }
 
-def qr_send(chat_id, text, keyboard):
-    return
+    url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto'
+    files = {'photo': open(f"{file_path}", 'rb')}
+    data = {
+        'chat_id': chat_id,
+        'caption': text, 
+        "reply_markup" : json.dumps(keyboard)
+    }
 
+    response = requests.post(url, files=files, data=data)
+    data = response.json()
+    photo_id = data['result']['photo'][0]['file_id']
+    user.qr_id = photo_id
+    user.save()
+    return photo_id
 
+def photo_send(chat_id, text, keyboard, photo_id):
+    url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto'
+    data = {
+        'chat_id': chat_id, 
+        'caption': text, 
+        'photo': photo_id,
+        "reply_markup" : json.dumps(keyboard)
+    }
 
-# def file_send(photo_id, chat_id):
-#     bot_token = BOT_TOKEN
+    response = requests.post(url, data=data)
+    return response
 
-#     # Constructing the file download URL using the file_id
-#     file_url = f'https://api.telegram.org/bot{bot_token}/getFile?file_id={photo_id}'
-
-#     # Fetching the file path using the file_id
-#     response = requests.get(file_url)
-#     file_path = response.json()['result']['file_path']
-
-#     # Constructing the file download URL
-#     download_url = f'https://api.telegram.org/file/bot{bot_token}/{file_path}'
-
-#     # Sending the file to the specified chat
-#     file_data = requests.get(download_url).content
-
-#     url = f'https://api.telegram.org/bot{bot_token}/sendPhoto'
-#     payload = {'chat_id': chat_id, 'photo': photo_id}
-
-
-#     response = requests.post(url, data=payload)
-#     print(response.json())   
-
-
-#     return response
