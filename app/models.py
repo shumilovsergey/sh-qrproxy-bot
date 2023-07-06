@@ -46,5 +46,5 @@ class Chats(models.Model):
         return self.chat_id
     
     class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
+        verbose_name = 'Пользователь TG'
+        verbose_name_plural = 'Пользователи TG'

@@ -84,7 +84,7 @@ def start(message):
 
     user = Chats.objects.get(chat_id=chat_id)
     user.last_callback = "none"
-    user.public_url = f"{DOMAIN_NAME}/telegram_bot/api/{chat_id}"
+    user.public_url = f"{DOMAIN_NAME}/api/telegram_bot/{chat_id}"
     user.save()
 
     if user.privat_url == "none":
