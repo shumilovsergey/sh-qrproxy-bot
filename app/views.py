@@ -15,7 +15,7 @@ from .models import Chats
 import json
 import requests
 from project.const import DOMAIN_NAME
-import os
+
 
 MENU_BUTTON = {
         "inline_keyboard" :  [
@@ -153,7 +153,7 @@ def rout_create(message, user):
 
     return
 
-class RedirectView(APIView):
+class RedirectTelegramView(APIView):
     def get(self, request, chat_id):
 
         user = Chats.objects.get(chat_id=chat_id)
